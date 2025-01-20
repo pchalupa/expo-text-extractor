@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["ExpoTextExtractorModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.textextractor.ExpoTextExtractorModule"]
+  }
+}

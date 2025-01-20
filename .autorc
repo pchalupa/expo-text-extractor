@@ -1,0 +1,12 @@
+{
+  "noVersionPrefix": true,
+  "plugins": [
+    "npm",
+    [
+      "conventional-commits",
+      {
+        "preset": "angular"
+      }
+    ]
+  ]
+}

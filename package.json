@@ -1,0 +1,44 @@
+{
+  "name": "expo-text-extractor",
+  "version": "0.1.0",
+  "description": "A React Native library for efficient text recognition (OCR) using MLKit and Vision, enabling seamless text extraction from images.",
+  "keywords": [
+    "react-native",
+    "expo",
+    "expo-text-extractor",
+    "ExpoTextExtractor"
+  ],
+  "repository": "https://github.com/pchalupa/expo-text-extractor",
+  "bugs": {
+    "url": "http://localhost/issues"
+  },
+  "author": "pchalupa <chalupa.petr93@gmail.com> (pchalupa)",
+  "license": "MIT",
+  "homepage": "https://github.com/pchalupa/expo-text-extractor#readme",
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "scripts": {
+    "build": "expo-module build",
+    "clean": "expo-module clean",
+    "lint": "expo-module lint",
+    "test": "expo-module test",
+    "prepare": "expo-module prepare",
+    "prepublishOnly": "expo-module prepublishOnly",
+    "expo-module": "expo-module",
+    "open:ios": "xed example/ios",
+    "open:android": "open -a \"Android Studio\" example/android"
+  },
+  "devDependencies": {
+    "@types/react": "~18.3.12",
+    "auto": "^11.3.0",
+    "expo": "~52.0.0",
+    "expo-module-scripts": "^4.0.3",
+    "prettier": "^3.4.2",
+    "react-native": "0.76.0"
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  }
+}
