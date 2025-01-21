@@ -41,5 +41,5 @@ const isSupported: boolean;
 Extracts text from an image and returns the recognized text as an array.
 
 ```ts
-async function extractTextFromImage(uri: string): Promise<string>;
+async function extractTextFromImage(uri: string): Promise<string[]>;
 ```
