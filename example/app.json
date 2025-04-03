@@ -11,16 +11,36 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app needs access to your photos to extract text from images.",
+          "cameraPermission": "The app needs access to your camera to capture images for text extraction."
+        }
+      ]
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "expo.modules.textextractor.example"
+      "bundleIdentifier": "expo.modules.textextractor.example",
+      "infoPlist": {
+        "NSCameraUsageDescription": "The app needs access to your camera to capture images for text extraction.",
+        "NSPhotoLibraryUsageDescription": "The app needs access to your photos to extract text from images."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "expo.modules.textextractor.example"
+      "package": "expo.modules.textextractor.example",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
