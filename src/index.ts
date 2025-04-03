@@ -1,5 +1,4 @@
 import { Platform } from 'react-native';
-
 import ExpoTextExtractorModule from './ExpoTextExtractorModule';
 
 /**
@@ -12,7 +11,7 @@ import ExpoTextExtractorModule from './ExpoTextExtractorModule';
  *   console.log('Text extraction is not supported on this device.');
  * }
  */
-export const isSupported = ExpoTextExtractorModule.isSupported;
+export const isSupported = ExpoTextExtractorModule.isSupported
 
 /**
  * Extracts text from an image.
@@ -21,8 +20,10 @@ export const isSupported = ExpoTextExtractorModule.isSupported;
  * @returns {Promise<string[]>} A promise that fulfills with an array of recognized texts.
  */
 export async function extractTextFromImage(uri: string): Promise<string[]> {
-  uri =
-    Platform.OS === 'android' && uri.startsWith('content://') ? uri : uri.replace('file://', '');
+  // Handle Android content URIs and file:// protocol properly
+  const processedUri = Platform.OS === 'android' && uri.startsWith('content://')
+    ? uri
+    : uri.replace('file://', '')
 
-  return ExpoTextExtractorModule.extractTextFromImage(uri);
+  return ExpoTextExtractorModule.extractTextFromImage(processedUri)
 }
