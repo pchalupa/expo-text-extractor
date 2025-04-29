@@ -44,7 +44,7 @@ class ExpoTextExtractorModule : Module() {
             promise.reject(CodedException("err", error))
           }
       } catch (error: Exception) {
-        promise.reject(CodedException("err", error.message ?: "Unknown error", error))
+        promise.reject(CodedException("UNKNOWN_ERROR", error.message ?: "Unknown error", error))
       }
     }
   }
