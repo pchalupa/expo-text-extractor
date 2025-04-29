@@ -5,4 +5,4 @@ interface ExpoTextExtractorModule {
   extractTextFromImage: (uri: string) => Promise<string[]>;
 }
 
-export default requireNativeModule('ExpoTextExtractor') as ExpoTextExtractorModule;
+export default requireNativeModule<ExpoTextExtractorModule>('ExpoTextExtractor');
