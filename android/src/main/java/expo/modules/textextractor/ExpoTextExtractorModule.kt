@@ -21,7 +21,6 @@ class ExpoTextExtractorModule : Module() {
     AsyncFunction("extractTextFromImage") { uriString: String, promise: Promise ->
       try {
         val context = appContext.reactContext!!
-        val contentResolver = context.contentResolver
         val uri = if (uriString.startsWith("content://")) {
           Uri.parse(uriString)
         } else {
