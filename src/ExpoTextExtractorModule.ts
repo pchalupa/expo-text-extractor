@@ -1,6 +1,6 @@
-import { NativeModule, requireNativeModule } from 'expo';
+import { requireNativeModule } from 'expo-modules-core';
 
-declare class ExpoTextExtractorModule extends NativeModule {
+interface ExpoTextExtractorModule {
   isSupported: boolean;
   extractTextFromImage: (uri: string) => Promise<string[]>;
 }

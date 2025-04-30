@@ -19,7 +19,7 @@ export const isSupported = ExpoTextExtractorModule.isSupported;
  * @returns {Promise<string[]>} A promise that fulfills with an array of recognized texts.
  */
 export async function extractTextFromImage(uri: string): Promise<string[]> {
-  uri = uri.replace('file://', '');
+  const processedUri = uri.replace('file://', '');
 
-  return ExpoTextExtractorModule.extractTextFromImage(uri);
+  return ExpoTextExtractorModule.extractTextFromImage(processedUri);
 }
