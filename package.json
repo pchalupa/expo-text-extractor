@@ -1,6 +1,6 @@
 {
   "name": "expo-text-extractor",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A React Native library for efficient text recognition (OCR) using MLKit and Vision, enabling seamless text extraction from images.",
   "keywords": [
     "react-native",
