@@ -1,3 +1,15 @@
+# 0.2.2 (Wed May 07 2025)
+
+#### 🐛 Bug Fix
+
+- ci: fix publish [#7](https://github.com/pchalupa/expo-text-extractor/pull/7) ([@pchalupa](https://github.com/pchalupa))
+
+#### Authors: 1
+
+- Petr Chalupa ([@pchalupa](https://github.com/pchalupa))
+
+---
+
 # 0.1.3 (Wed Apr 30 2025)
 
 #### 🐛 Bug Fix
