@@ -28,6 +28,8 @@
     "open:android": "open -a \"Android Studio\" example/android"
   },
   "devDependencies": {
+    "@auto-it/conventional-commits": "^11.3.0",
+    "@auto-it/npm": "^11.3.0",
     "@types/react": "~18.3.12",
     "auto": "^11.3.0",
     "expo": "~52.0.0",
