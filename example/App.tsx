@@ -6,12 +6,12 @@ import {
   requestMediaLibraryPermissionsAsync,
 } from 'expo-image-picker';
 import {
-  extractTextFromImage,
-  extractTextFromImageIOS,
-  extractTextFromImageAndroid,
+  extractTextFromImageAdvanced,
+  getPlatformCapabilities,
   isSupported,
-  type RecognizeTextIOSResult,
-  type RecognizeTextAndroidResult,
+  projectToOverlay,
+  type UnifiedTextExtractionResult,
+  type UnifiedTextExtractionOptions,
 } from 'expo-text-extractor';
 import { useEffect, useState } from 'react';
 import {
@@ -24,18 +24,80 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Platform,
   Switch,
+  Platform,
 } from 'react-native';
 
+interface BoundingBoxOverlayProps {
+  result: UnifiedTextExtractionResult;
+  imageLayout: { width: number; height: number };
+  visible: boolean;
+}
+
+function BoundingBoxOverlay({ result, imageLayout, visible }: BoundingBoxOverlayProps) {
+  if (!visible || !result || !imageLayout) {
+    return null;
+  }
+
+  const getBoxColor = (confidence: number) => {
+    if (confidence >= 0.8) return '#4ade80'; // green for high confidence
+    if (confidence >= 0.6) return '#fbbf24'; // yellow for medium confidence
+    return '#f87171'; // red for low confidence
+  };
+
+  return (
+    <View style={styles.overlayContainer}>
+      {result.regions.map((region, index) => {
+        // Project the bounding box coordinates to the overlay dimensions
+        const projectedBox = projectToOverlay(region.boundingBox, result.imageSize, imageLayout);
+
+        // Ensure we have a bounding box (not a point)
+        if (!('width' in projectedBox)) {
+          return null;
+        }
+
+        const boxColor = getBoxColor(region.confidence);
+
+        return (
+          <View
+            key={`bbox-${index}`}
+            style={[
+              styles.boundingBox,
+              {
+                left: projectedBox.x,
+                top: projectedBox.y,
+                width: projectedBox.width,
+                height: projectedBox.height,
+                borderColor: boxColor,
+                backgroundColor: boxColor + '20', // 20 for opacity
+              },
+            ]}>
+            <View style={[styles.boundingBoxLabel, { backgroundColor: boxColor }]}>
+              <Text style={styles.boundingBoxText}>{index + 1}</Text>
+            </View>
+            {projectedBox.height > 30 && (
+              <Text style={styles.confidenceText} numberOfLines={1}>
+                {Math.round(region.confidence * 100)}%
+              </Text>
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function App() {
-  const [result, setResult] = useState<string[]>([]);
+  const [result, setResult] = useState<UnifiedTextExtractionResult | null>(null);
   const [imageUri, setImageUri] = useState<string>();
-  const [advancedIOS, setAdvancedIOS] = useState<RecognizeTextIOSResult | null>(null);
-  const [advancedAndroid, setAdvancedAndroid] = useState<RecognizeTextAndroidResult | null>(null);
   const [cameraPermission, setCameraPermission] = useState<PermissionStatus | null>(null);
   const [galleryPermission, setGalleryPermission] = useState<PermissionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showBoundingBoxes, setShowBoundingBoxes] = useState(true);
+  const [imageLayout, setImageLayout] = useState<{ width: number; height: number } | null>(null);
+
+  const platformCapabilities = getPlatformCapabilities();
 
   useEffect(() => {
     const getPermissions = async () => {
@@ -54,27 +116,19 @@ export default function App() {
 
     setImageUri(path);
     setIsLoading(true);
-    setResult([]);
-    setAdvancedIOS(null);
-    setAdvancedAndroid(null);
+    setResult(null);
 
     if (isSupported) {
       try {
-        const extractedTexts = await extractTextFromImage(path);
-        setResult(extractedTexts);
+        // Use unified API with options that work across platforms
+        const extractionOptions: UnifiedTextExtractionOptions = {
+          recognitionLevel: 'accurate',
+          recognitionLanguages: ['en-US'],
+          maxCandidates: 3,
+        };
 
-        if (Platform.OS === 'ios') {
-          const advancedRes = await extractTextFromImageIOS(path, {
-            maxCandidates: 3,
-            recognitionLevel: 'accurate',
-          });
-          setAdvancedIOS(advancedRes);
-          setAdvancedAndroid(null);
-        } else if (Platform.OS === 'android') {
-          const advancedRes = await extractTextFromImageAndroid(path);
-          setAdvancedAndroid(advancedRes);
-          setAdvancedIOS(null);
-        }
+        const unifiedResult = await extractTextFromImageAdvanced(path, extractionOptions);
+        setResult(unifiedResult);
       } catch (error) {
         if (error instanceof Error) Alert.alert('Text Extraction Error', error.message);
       } finally {
@@ -157,18 +211,37 @@ export default function App() {
           </View>
           <View style={styles.previewContainer}>
             {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.previewImage} />
+              <View style={styles.imageWrapper}>
+                <Image
+                  source={{ uri: imageUri }}
+                  style={styles.previewImage}
+                  onLayout={(event) => {
+                    const { width, height } = event.nativeEvent.layout;
+                    setImageLayout({ width, height });
+                  }}
+                  resizeMode="contain"
+                />
+                {imageLayout && result && (
+                  <BoundingBoxOverlay
+                    result={result}
+                    imageLayout={imageLayout}
+                    visible={showBoundingBoxes}
+                  />
+                )}
+              </View>
             ) : (
               <Text style={styles.placeholderText}>No image selected</Text>
             )}
           </View>
         </View>
-        {__DEV__ && (
-          <View style={styles.devRow}>
-            <Text style={styles.meta}>Show advanced (iOS)</Text>
-            <Switch value={showAdvanced} onValueChange={setShowAdvanced} />
-          </View>
-        )}
+        <View style={styles.devRow}>
+          <Text style={styles.meta}>Show advanced details</Text>
+          <Switch value={showAdvanced} onValueChange={setShowAdvanced} />
+        </View>
+        <View style={styles.devRow}>
+          <Text style={styles.meta}>Show bounding boxes</Text>
+          <Switch value={showBoundingBoxes} onValueChange={setShowBoundingBoxes} />
+        </View>
         <ScrollView style={styles.resultsContainer} contentContainerStyle={styles.scrollContainer}>
           {isLoading ? (
             <View style={styles.loadingContainer}>
@@ -177,83 +250,96 @@ export default function App() {
             </View>
           ) : (
             <View>
-              <Text style={styles.sectionTitle}>Simple lines</Text>
-              {result.length > 0 ? (
-                result.map((line, index) => (
-                  <Text key={`line-${index}`} style={styles.mono}>
-                    {line}
+              <Text style={styles.sectionTitle}>Extracted Text</Text>
+              {result && result.regions.length > 0 ? (
+                result.regions.map((region, index) => (
+                  <Text key={`region-${index}`} style={styles.mono}>
+                    {region.text}
                   </Text>
                 ))
               ) : (
                 <Text style={styles.noResultsText}>No text detected</Text>
               )}
 
-              {__DEV__ && showAdvanced && Platform.OS === 'ios' && advancedIOS && (
-                <View style={{ marginTop: 16 }}>
-                  <Text style={styles.sectionTitle}>Advanced (iOS)</Text>
+              {result && (
+                <View style={styles.infoSection}>
+                  <Text style={styles.sectionTitle}>Detection Info</Text>
                   <Text style={styles.meta}>
-                    {`imageSize: ${advancedIOS.imageSize.width.toFixed(0)}x${advancedIOS.imageSize.height.toFixed(0)} - observations: ${advancedIOS.observations.length}`}
+                    Platform: {result.platform} | Regions: {result.regions.length}
                   </Text>
                   <Text style={styles.meta}>
-                    {`request: level=${advancedIOS.effectiveRequest.recognitionLevel}, revision=${advancedIOS.effectiveRequest.revision}, langs=[${advancedIOS.effectiveRequest.recognitionLanguages.join(', ')}], maxCandidates=${advancedIOS.effectiveRequest.maxCandidates ?? 128}`}
+                    Image Size: {result.imageSize.width}×{result.imageSize.height}
                   </Text>
-
-                  {advancedIOS.observations.map((obs, idx) => (
-                    <View key={`obs-${idx}`} style={styles.obsBlock}>
-                      <Text style={styles.obsTitle}>Observation #{idx + 1}</Text>
-                      <Text style={styles.mono}>
-                        bbox: x={obs.boundingBox.x.toFixed(3)} y={obs.boundingBox.y.toFixed(3)} w=
-                        {obs.boundingBox.width.toFixed(3)} h={obs.boundingBox.height.toFixed(3)}
-                      </Text>
-                      <View style={{ marginTop: 6 }}>
-                        {obs.candidates.map((cand, cIdx) => (
-                          <Text key={`cand-${idx}-${cIdx}`} style={styles.candidate}>
-                            {cIdx + 1}. {cand.text} (conf={cand.confidence.toFixed(3)})
-                          </Text>
-                        ))}
-                      </View>
-                    </View>
-                  ))}
+                  <Text style={styles.meta}>
+                    Recognition Level: {result.effectiveOptions.recognitionLevel}
+                  </Text>
+                  {result.performance && (
+                    <Text style={styles.meta}>
+                      Processing Time: {result.performance.recognitionTimeMs}ms
+                    </Text>
+                  )}
                 </View>
               )}
 
-              {__DEV__ && showAdvanced && Platform.OS === 'android' && advancedAndroid && (
-                <View style={{ marginTop: 16 }}>
-                  <Text style={styles.sectionTitle}>Advanced (Android)</Text>
+              {showAdvanced && result && (
+                <View style={styles.infoSection}>
+                  <Text style={styles.sectionTitle}>Advanced Details</Text>
+                  
+                  {showBoundingBoxes && (
+                    <View style={styles.legendSection}>
+                      <Text style={styles.subsectionTitle}>Bounding Box Legend</Text>
+                      <View style={styles.legendRow}>
+                        <View style={[styles.legendBox, { backgroundColor: '#4ade80' }]} />
+                        <Text style={styles.legendText}>High confidence (≥80%)</Text>
+                      </View>
+                      <View style={styles.legendRow}>
+                        <View style={[styles.legendBox, { backgroundColor: '#fbbf24' }]} />
+                        <Text style={styles.legendText}>Medium confidence (60-79%)</Text>
+                      </View>
+                      <View style={styles.legendRow}>
+                        <View style={[styles.legendBox, { backgroundColor: '#f87171' }]} />
+                        <Text style={styles.legendText}>Low confidence (&lt;60%)</Text>
+                      </View>
+                    </View>
+                  )}
+                  
+                  <Text style={styles.subsectionTitle}>Platform Capabilities</Text>
                   <Text style={styles.meta}>
-                    {`imageSize: ${advancedAndroid.imageSize.width}x${advancedAndroid.imageSize.height} - blocks: ${advancedAndroid.blocks.length}`}
-                  </Text>
-                  <Text style={styles.meta}>
-                    {`model: ${advancedAndroid.effectiveRequest.model}`}
+                    Supported Features:{' '}
+                    {Object.entries(platformCapabilities.features)
+                      .filter(([_, supported]) => supported)
+                      .map(([feature]) => feature)
+                      .join(', ')}
                   </Text>
 
-                  {advancedAndroid.blocks.map((block, bIdx) => (
-                    <View key={`block-${bIdx}`} style={styles.obsBlock}>
-                      <Text style={styles.obsTitle}>Block #{bIdx + 1}</Text>
-                      <Text style={styles.mono}>{block.text}</Text>
-                      {block.boundingBox && (
-                        <Text style={styles.mono}>
-                          bbox: x={block.boundingBox.x} y={block.boundingBox.y} w=
-                          {block.boundingBox.width} h={block.boundingBox.height}
-                        </Text>
-                      )}
-                      {block.lines.map((line, lIdx) => (
-                        <View key={`line-${bIdx}-${lIdx}`} style={{ marginTop: 6 }}>
-                          <Text style={styles.obsTitle}>Line #{lIdx + 1}</Text>
-                          <Text style={styles.mono}>{line.text}</Text>
-                          {line.boundingBox && (
-                            <Text style={styles.mono}>
-                              bbox: x={line.boundingBox.x} y={line.boundingBox.y} w=
-                              {line.boundingBox.width} h={line.boundingBox.height}
-                            </Text>
-                          )}
-                          {line.elements.map((el, eIdx) => (
-                            <Text key={`el-${bIdx}-${lIdx}-${eIdx}`} style={styles.candidate}>
-                              - {el.text}
+                  <Text style={styles.subsectionTitle}>Detected Regions</Text>
+                  {result.regions.map((region, index) => (
+                    <View key={`detail-${index}`} style={styles.regionDetail}>
+                      <Text style={styles.regionTitle}>Region #{index + 1}</Text>
+                      <Text style={styles.mono}>"{region.text}"</Text>
+                      <Text style={styles.meta}>Confidence: {region.confidence.toFixed(3)}</Text>
+                      <Text style={styles.meta}>
+                        Position: ({region.boundingBox.x.toFixed(0)},{' '}
+                        {region.boundingBox.y.toFixed(0)})
+                      </Text>
+                      <Text style={styles.meta}>
+                        Size: {region.boundingBox.width.toFixed(0)}×
+                        {region.boundingBox.height.toFixed(0)}
+                      </Text>
+                      <Text style={styles.meta}>
+                        Percentage: ({region.boundingBox.xPercent.toFixed(2)},{' '}
+                        {region.boundingBox.yPercent.toFixed(2)})
+                      </Text>
+                      {region.candidates.length > 1 && (
+                        <View style={styles.candidatesSection}>
+                          <Text style={styles.meta}>Alternative candidates:</Text>
+                          {region.candidates.slice(1).map((candidate, cIdx) => (
+                            <Text key={`cand-${index}-${cIdx}`} style={styles.candidate}>
+                              • {candidate.text} (conf: {candidate.confidence.toFixed(3)})
                             </Text>
                           ))}
                         </View>
-                      ))}
+                      )}
                     </View>
                   ))}
                 </View>
@@ -371,5 +457,105 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  infoSection: {
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#ddd',
+  },
+  subsectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 8,
+    marginBottom: 4,
+    color: '#333',
+  },
+  regionDetail: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#eee',
+  },
+  regionTitle: {
+    fontWeight: '600',
+    marginBottom: 4,
+    color: '#444',
+  },
+  candidatesSection: {
+    marginTop: 6,
+    marginLeft: 8,
+  },
+  imageWrapper: {
+    flex: 1,
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
+  overlayContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    pointerEvents: 'none',
+  },
+  boundingBox: {
+    position: 'absolute',
+    borderWidth: 2,
+    borderColor: '#ff6b6b',
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    borderRadius: 2,
+    minWidth: 20,
+    minHeight: 20,
+  },
+  boundingBoxLabel: {
+    position: 'absolute',
+    top: -12,
+    left: -1,
+    backgroundColor: '#ff6b6b',
+    borderRadius: 8,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  boundingBoxText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  confidenceText: {
+    position: 'absolute',
+    bottom: 2,
+    right: 2,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    color: 'white',
+    fontSize: 8,
+    paddingHorizontal: 2,
+    paddingVertical: 1,
+    borderRadius: 2,
+  },
+  legendSection: {
+    marginVertical: 8,
+    padding: 8,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 4,
+  },
+  legendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 2,
+  },
+  legendBox: {
+    width: 12,
+    height: 12,
+    borderRadius: 2,
+    marginRight: 8,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#666',
   },
 });
