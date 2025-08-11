@@ -1,4 +1,9 @@
-import ExpoTextExtractorModule from './ExpoTextExtractorModule';
+import { Platform } from 'react-native';
+
+import ExpoTextExtractorModule, {
+  RecognizeTextIOSResult,
+  VNRecognizeTextRequestOptions,
+} from './ExpoTextExtractorModule';
 
 /**
  * A boolean value that indicates whether the text extraction module is supported on the current device.
@@ -23,3 +28,24 @@ export async function extractTextFromImage(uri: string): Promise<string[]> {
 
   return ExpoTextExtractorModule.extractTextFromImage(processedUri);
 }
+
+/**
+ * iOS-only: Extracts text from an image and returns Vision-like observations.
+ * On non-iOS platforms, this will throw an error.
+ */
+export async function extractTextFromImageIOS(
+  uri: string,
+  options?: VNRecognizeTextRequestOptions,
+): Promise<RecognizeTextIOSResult> {
+  if (Platform.OS !== 'ios') {
+    throw new Error('extractTextFromImageIOS is only available on iOS');
+  }
+
+  const processedUri = uri.replace('file://', '');
+  if (!ExpoTextExtractorModule.extractTextFromImageIOS) {
+    throw new Error('Native function extractTextFromImageIOS is not available');
+  }
+  return ExpoTextExtractorModule.extractTextFromImageIOS(processedUri, options);
+}
+
+export type { RecognizeTextIOSResult, VNRecognizeTextRequestOptions };

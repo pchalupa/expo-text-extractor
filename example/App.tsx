@@ -5,7 +5,7 @@ import {
   requestCameraPermissionsAsync,
   requestMediaLibraryPermissionsAsync,
 } from 'expo-image-picker';
-import { extractTextFromImage, isSupported } from 'expo-text-extractor';
+import { extractTextFromImage, extractTextFromImageIOS, isSupported } from 'expo-text-extractor';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -49,6 +49,12 @@ export default function App() {
       try {
         const extractedTexts = await extractTextFromImage(path);
         setResult(extractedTexts);
+
+        const advanced = await extractTextFromImageIOS(path, { 
+          maxCandidates: 3, 
+          recognitionLevel: 'accurate'
+          });
+        console.log('Advanced extraction result:', JSON.stringify(advanced, null, 2));
       } catch (error) {
         if (error instanceof Error) Alert.alert('Text Extraction Error', error.message);
       } finally {
