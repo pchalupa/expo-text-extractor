@@ -8,8 +8,10 @@ import {
 import {
   extractTextFromImage,
   extractTextFromImageIOS,
+  extractTextFromImageAndroid,
   isSupported,
   type RecognizeTextIOSResult,
+  type RecognizeTextAndroidResult,
 } from 'expo-text-extractor';
 import { useEffect, useState } from 'react';
 import {
@@ -29,8 +31,8 @@ import {
 export default function App() {
   const [result, setResult] = useState<string[]>([]);
   const [imageUri, setImageUri] = useState<string>();
-  const [advanced, setAdvanced] = useState<RecognizeTextIOSResult | null>(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [advancedIOS, setAdvancedIOS] = useState<RecognizeTextIOSResult | null>(null);
+  const [advancedAndroid, setAdvancedAndroid] = useState<RecognizeTextAndroidResult | null>(null);
   const [cameraPermission, setCameraPermission] = useState<PermissionStatus | null>(null);
   const [galleryPermission, setGalleryPermission] = useState<PermissionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,24 +52,28 @@ export default function App() {
   const processImage = async (path?: string) => {
     if (!path) return;
 
-  setImageUri(path);
-  setIsLoading(true);
-  setResult([]);
-  setAdvanced(null);
+    setImageUri(path);
+    setIsLoading(true);
+    setResult([]);
+    setAdvancedIOS(null);
+    setAdvancedAndroid(null);
 
     if (isSupported) {
       try {
         const extractedTexts = await extractTextFromImage(path);
         setResult(extractedTexts);
 
-        if (__DEV__ && showAdvanced) {
+        if (Platform.OS === 'ios') {
           const advancedRes = await extractTextFromImageIOS(path, {
             maxCandidates: 3,
             recognitionLevel: 'accurate',
           });
-          setAdvanced(advancedRes);
-        } else {
-          setAdvanced(null);
+          setAdvancedIOS(advancedRes);
+          setAdvancedAndroid(null);
+        } else if (Platform.OS === 'android') {
+          const advancedRes = await extractTextFromImageAndroid(path);
+          setAdvancedAndroid(advancedRes);
+          setAdvancedIOS(null);
         }
       } catch (error) {
         if (error instanceof Error) Alert.alert('Text Extraction Error', error.message);
@@ -182,17 +188,17 @@ export default function App() {
                 <Text style={styles.noResultsText}>No text detected</Text>
               )}
 
-              {__DEV__ && showAdvanced && advanced && (
+              {__DEV__ && showAdvanced && Platform.OS === 'ios' && advancedIOS && (
                 <View style={{ marginTop: 16 }}>
                   <Text style={styles.sectionTitle}>Advanced (iOS)</Text>
                   <Text style={styles.meta}>
-                    {`imageSize: ${advanced.imageSize.width.toFixed(0)}x${advanced.imageSize.height.toFixed(0)} - observations: ${advanced.observations.length}`}
+                    {`imageSize: ${advancedIOS.imageSize.width.toFixed(0)}x${advancedIOS.imageSize.height.toFixed(0)} - observations: ${advancedIOS.observations.length}`}
                   </Text>
                   <Text style={styles.meta}>
-                    {`request: level=${advanced.effectiveRequest.recognitionLevel}, revision=${advanced.effectiveRequest.revision}, langs=[${advanced.effectiveRequest.recognitionLanguages.join(', ')}], maxCandidates=${advanced.effectiveRequest.maxCandidates ?? 128}`}
+                    {`request: level=${advancedIOS.effectiveRequest.recognitionLevel}, revision=${advancedIOS.effectiveRequest.revision}, langs=[${advancedIOS.effectiveRequest.recognitionLanguages.join(', ')}], maxCandidates=${advancedIOS.effectiveRequest.maxCandidates ?? 128}`}
                   </Text>
 
-                  {advanced.observations.map((obs, idx) => (
+                  {advancedIOS.observations.map((obs, idx) => (
                     <View key={`obs-${idx}`} style={styles.obsBlock}>
                       <Text style={styles.obsTitle}>Observation #{idx + 1}</Text>
                       <Text style={styles.mono}>
@@ -206,6 +212,48 @@ export default function App() {
                           </Text>
                         ))}
                       </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {__DEV__ && showAdvanced && Platform.OS === 'android' && advancedAndroid && (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={styles.sectionTitle}>Advanced (Android)</Text>
+                  <Text style={styles.meta}>
+                    {`imageSize: ${advancedAndroid.imageSize.width}x${advancedAndroid.imageSize.height} - blocks: ${advancedAndroid.blocks.length}`}
+                  </Text>
+                  <Text style={styles.meta}>
+                    {`model: ${advancedAndroid.effectiveRequest.model}`}
+                  </Text>
+
+                  {advancedAndroid.blocks.map((block, bIdx) => (
+                    <View key={`block-${bIdx}`} style={styles.obsBlock}>
+                      <Text style={styles.obsTitle}>Block #{bIdx + 1}</Text>
+                      <Text style={styles.mono}>{block.text}</Text>
+                      {block.boundingBox && (
+                        <Text style={styles.mono}>
+                          bbox: x={block.boundingBox.x} y={block.boundingBox.y} w=
+                          {block.boundingBox.width} h={block.boundingBox.height}
+                        </Text>
+                      )}
+                      {block.lines.map((line, lIdx) => (
+                        <View key={`line-${bIdx}-${lIdx}`} style={{ marginTop: 6 }}>
+                          <Text style={styles.obsTitle}>Line #{lIdx + 1}</Text>
+                          <Text style={styles.mono}>{line.text}</Text>
+                          {line.boundingBox && (
+                            <Text style={styles.mono}>
+                              bbox: x={line.boundingBox.x} y={line.boundingBox.y} w=
+                              {line.boundingBox.width} h={line.boundingBox.height}
+                            </Text>
+                          )}
+                          {line.elements.map((el, eIdx) => (
+                            <Text key={`el-${bIdx}-${lIdx}-${eIdx}`} style={styles.candidate}>
+                              - {el.text}
+                            </Text>
+                          ))}
+                        </View>
+                      ))}
                     </View>
                   ))}
                 </View>

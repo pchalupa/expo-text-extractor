@@ -3,6 +3,8 @@ import { Platform } from 'react-native';
 import ExpoTextExtractorModule, {
   RecognizeTextIOSResult,
   VNRecognizeTextRequestOptions,
+  RecognizeTextAndroidResult,
+  ExtractTextAndroidOptions,
 } from './ExpoTextExtractorModule';
 
 /**
@@ -48,4 +50,28 @@ export async function extractTextFromImageIOS(
   return ExpoTextExtractorModule.extractTextFromImageIOS(processedUri, options);
 }
 
-export type { RecognizeTextIOSResult, VNRecognizeTextRequestOptions };
+/**
+ * Android-only: Extracts text from an image and returns ML Kit-like structure.
+ * On non-Android platforms, this will throw an error.
+ */
+export async function extractTextFromImageAndroid(
+  uri: string,
+  options?: ExtractTextAndroidOptions,
+): Promise<RecognizeTextAndroidResult> {
+  if (Platform.OS !== 'android') {
+    throw new Error('extractTextFromImageAndroid is only available on Android');
+  }
+
+  const processedUri = uri.replace('file://', '');
+  if (!ExpoTextExtractorModule.extractTextFromImageAndroid) {
+    throw new Error('Native function extractTextFromImageAndroid is not available');
+  }
+  return ExpoTextExtractorModule.extractTextFromImageAndroid(processedUri, options);
+}
+
+export type {
+  RecognizeTextIOSResult,
+  VNRecognizeTextRequestOptions,
+  RecognizeTextAndroidResult,
+  ExtractTextAndroidOptions,
+};

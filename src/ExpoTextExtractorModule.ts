@@ -90,8 +90,8 @@ export type RecognizeTextIOSResult = {
     recognitionLanguages: string[];
     usesLanguageCorrection: boolean;
     revision: number;
-  /** Minimum text height used by native (normalized [0..1]). */
-  minimumTextHeight?: number;
+    /** Minimum text height used by native (normalized [0..1]). */
+    minimumTextHeight?: number;
     regionOfInterest: { x: number; y: number; width: number; height: number };
     customWords?: string[];
     automaticallyDetectsLanguage?: boolean;
@@ -100,9 +100,66 @@ export type RecognizeTextIOSResult = {
   };
 };
 
+// ANDROID
+export type MLKPoint = { x: number; y: number };
+export type RectBox = { x: number; y: number; width: number; height: number };
+
+export type MLKSymbol = {
+  text: string;
+  boundingBox?: RectBox;
+  cornerPoints?: MLKPoint[];
+  confidence?: number;
+  rotationDegree?: number;
+};
+
+export type MLKTextElement = {
+  text: string;
+  boundingBox?: RectBox;
+  cornerPoints?: MLKPoint[];
+  recognizedLanguage?: string;
+  confidence?: number;
+  rotationDegree?: number;
+  symbols?: MLKSymbol[];
+};
+
+export type MLKTextLine = {
+  text: string;
+  boundingBox?: RectBox;
+  cornerPoints?: MLKPoint[];
+  elements: MLKTextElement[];
+  recognizedLanguage?: string;
+  confidence?: number;
+  rotationDegree?: number;
+};
+
+export type MLKTextBlock = {
+  text: string;
+  boundingBox?: RectBox;
+  cornerPoints?: MLKPoint[];
+  lines: MLKTextLine[];
+  recognizedLanguage?: string;
+};
+
+export type RecognizeTextAndroidResult = {
+  blocks: MLKTextBlock[];
+  fullText: string;
+  imageSize: { width: number; height: number };
+  effectiveRequest: {
+    /** ML Kit on-device model used. Currently only 'latin' is bundled by this module. */
+    model: 'latin';
+  };
+};
+
+export type ExtractTextAndroidOptions = {
+  /** Choose ML Kit on-device model/script. Defaults to 'latin'. */
+  model?: 'latin';
+};
+
 interface ExpoTextExtractorModule {
   isSupported: boolean;
+
   extractTextFromImage: (uri: string) => Promise<string[]>;
+  
   // iOS-only advanced API
   /**
    * iOS-only: Extract text and return Vision-like observations and metadata.
@@ -112,6 +169,12 @@ interface ExpoTextExtractorModule {
     uri: string,
     options?: VNRecognizeTextRequestOptions,
   ) => Promise<RecognizeTextIOSResult>;
+
+  // Android-only advanced API
+  extractTextFromImageAndroid?: (
+    uri: string,
+    options?: ExtractTextAndroidOptions,
+  ) => Promise<RecognizeTextAndroidResult>;
 }
 
 export default requireNativeModule<ExpoTextExtractorModule>('ExpoTextExtractor');
