@@ -30,6 +30,11 @@ export type VNRecognizeTextRequestOptions = {
    */
   regionOfInterest?: { x: number; y: number; width: number; height: number };
   /**
+   * Minimum text height in normalized image coordinates [0..1].
+   * Values too small can increase noise. If omitted, Vision's default is used.
+   */
+  minimumTextHeight?: number;
+  /**
    * VNRecognizeTextRequest revision to use. If not supported, the default revision is used.
    */
   revision?: number;
@@ -59,14 +64,10 @@ export type RecognizedTextCandidate = {
  * Vision-like observation describing a detected text region.
  */
 export type VNRecognizedTextObservationTS = {
-  /** Stable identifier for the observation within this request. */
-  uuid: string;
   /** Normalized bounding box in Vision coordinate space [0..1]. */
   boundingBox: { x: number; y: number; width: number; height: number };
   /** All available recognition candidates for this region, best-first. */
   candidates: RecognizedTextCandidate[];
-  /** The request revision that produced this observation. */
-  requestRevision: number;
 };
 
 /**
@@ -89,11 +90,13 @@ export type RecognizeTextIOSResult = {
     recognitionLanguages: string[];
     usesLanguageCorrection: boolean;
     revision: number;
+  /** Minimum text height used by native (normalized [0..1]). */
+  minimumTextHeight?: number;
     regionOfInterest: { x: number; y: number; width: number; height: number };
     customWords?: string[];
     automaticallyDetectsLanguage?: boolean;
-  /** Effective candidate cap used by native (defaults to 128 when not provided or < 1). */
-  maxCandidates?: number;
+    /** Effective candidate cap used by native (defaults to 128 when not provided or < 1). */
+    maxCandidates?: number;
   };
 };
 

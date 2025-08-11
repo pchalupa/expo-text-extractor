@@ -5,7 +5,12 @@ import {
   requestCameraPermissionsAsync,
   requestMediaLibraryPermissionsAsync,
 } from 'expo-image-picker';
-import { extractTextFromImage, extractTextFromImageIOS, isSupported } from 'expo-text-extractor';
+import {
+  extractTextFromImage,
+  extractTextFromImageIOS,
+  isSupported,
+  type RecognizeTextIOSResult,
+} from 'expo-text-extractor';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -17,11 +22,15 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
+  Switch,
 } from 'react-native';
 
 export default function App() {
   const [result, setResult] = useState<string[]>([]);
   const [imageUri, setImageUri] = useState<string>();
+  const [advanced, setAdvanced] = useState<RecognizeTextIOSResult | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [cameraPermission, setCameraPermission] = useState<PermissionStatus | null>(null);
   const [galleryPermission, setGalleryPermission] = useState<PermissionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,20 +50,25 @@ export default function App() {
   const processImage = async (path?: string) => {
     if (!path) return;
 
-    setImageUri(path);
-    setIsLoading(true);
-    setResult([]);
+  setImageUri(path);
+  setIsLoading(true);
+  setResult([]);
+  setAdvanced(null);
 
     if (isSupported) {
       try {
         const extractedTexts = await extractTextFromImage(path);
         setResult(extractedTexts);
 
-        const advanced = await extractTextFromImageIOS(path, { 
-          maxCandidates: 3, 
-          recognitionLevel: 'accurate'
+        if (__DEV__ && showAdvanced) {
+          const advancedRes = await extractTextFromImageIOS(path, {
+            maxCandidates: 3,
+            recognitionLevel: 'accurate',
           });
-        console.log('Advanced extraction result:', JSON.stringify(advanced, null, 2));
+          setAdvanced(advancedRes);
+        } else {
+          setAdvanced(null);
+        }
       } catch (error) {
         if (error instanceof Error) Alert.alert('Text Extraction Error', error.message);
       } finally {
@@ -143,16 +157,60 @@ export default function App() {
             )}
           </View>
         </View>
+        {__DEV__ && (
+          <View style={styles.devRow}>
+            <Text style={styles.meta}>Show advanced (iOS)</Text>
+            <Switch value={showAdvanced} onValueChange={setShowAdvanced} />
+          </View>
+        )}
         <ScrollView style={styles.resultsContainer} contentContainerStyle={styles.scrollContainer}>
           {isLoading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color="#6858e9" />
               <Text style={styles.loadingText}>Extracting text...</Text>
             </View>
-          ) : result.length > 0 ? (
-            result.map((line, index) => <Text key={index}>{line}</Text>)
           ) : (
-            <Text style={styles.noResultsText}>No text detected</Text>
+            <View>
+              <Text style={styles.sectionTitle}>Simple lines</Text>
+              {result.length > 0 ? (
+                result.map((line, index) => (
+                  <Text key={`line-${index}`} style={styles.mono}>
+                    {line}
+                  </Text>
+                ))
+              ) : (
+                <Text style={styles.noResultsText}>No text detected</Text>
+              )}
+
+              {__DEV__ && showAdvanced && advanced && (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={styles.sectionTitle}>Advanced (iOS)</Text>
+                  <Text style={styles.meta}>
+                    {`imageSize: ${advanced.imageSize.width.toFixed(0)}x${advanced.imageSize.height.toFixed(0)} - observations: ${advanced.observations.length}`}
+                  </Text>
+                  <Text style={styles.meta}>
+                    {`request: level=${advanced.effectiveRequest.recognitionLevel}, revision=${advanced.effectiveRequest.revision}, langs=[${advanced.effectiveRequest.recognitionLanguages.join(', ')}], maxCandidates=${advanced.effectiveRequest.maxCandidates ?? 128}`}
+                  </Text>
+
+                  {advanced.observations.map((obs, idx) => (
+                    <View key={`obs-${idx}`} style={styles.obsBlock}>
+                      <Text style={styles.obsTitle}>Observation #{idx + 1}</Text>
+                      <Text style={styles.mono}>
+                        bbox: x={obs.boundingBox.x.toFixed(3)} y={obs.boundingBox.y.toFixed(3)} w=
+                        {obs.boundingBox.width.toFixed(3)} h={obs.boundingBox.height.toFixed(3)}
+                      </Text>
+                      <View style={{ marginTop: 6 }}>
+                        {obs.candidates.map((cand, cIdx) => (
+                          <Text key={`cand-${idx}-${cIdx}`} style={styles.candidate}>
+                            {cIdx + 1}. {cand.text} (conf={cand.confidence.toFixed(3)})
+                          </Text>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
           )}
         </ScrollView>
       </View>
@@ -230,5 +288,40 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
     marginTop: 10,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  meta: {
+    color: '#555',
+    marginBottom: 4,
+  },
+  obsBlock: {
+    marginTop: 12,
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: '#ddd',
+  },
+  obsTitle: {
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  mono: {
+    fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' }),
+    fontSize: 12,
+    color: '#222',
+  },
+  candidate: {
+    marginLeft: 8,
+    color: '#333',
+  },
+  devRow: {
+    marginTop: 8,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 });

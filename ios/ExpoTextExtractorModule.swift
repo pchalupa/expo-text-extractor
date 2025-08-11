@@ -76,14 +76,12 @@ public class ExpoTextExtractorModule: Module {
                         }
 
                         return [
-                            "uuid": observation.uuid.uuidString,
                             "boundingBox": [
                                 "x": observation.boundingBox.origin.x,
                                 "y": observation.boundingBox.origin.y,
                                 "width": observation.boundingBox.size.width,
                                 "height": observation.boundingBox.size.height
                             ],
-                            "requestRevision": observation.requestRevision,
                             "candidates": candidates
                         ] as [String: Any]
                     }
