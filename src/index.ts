@@ -1,11 +1,12 @@
 import { Platform } from 'react-native';
 
-import ExpoTextExtractorModule, {
+import ExpoTextExtractorModule from './ExpoTextExtractorModule';
+import type {
   RecognizeTextIOSResult,
   VNRecognizeTextRequestOptions,
   RecognizeTextAndroidResult,
   ExtractTextAndroidOptions,
-} from './ExpoTextExtractorModule';
+} from './types';
 
 /**
  * A boolean value that indicates whether the text extraction module is supported on the current device.
@@ -70,8 +71,20 @@ export async function extractTextFromImageAndroid(
 }
 
 export type {
+  // iOS types
   RecognizeTextIOSResult,
   VNRecognizeTextRequestOptions,
+  RecognizedTextCandidate,
+  VNRecognizedTextObservation,
+  // Android types
   RecognizeTextAndroidResult,
   ExtractTextAndroidOptions,
-};
+  MLKPoint,
+  RectBox,
+  MLKSymbol,
+  MLKTextElement,
+  MLKTextLine,
+  MLKTextBlock,
+  // Common types
+  ExpoTextExtractorModule,
+} from './types';
