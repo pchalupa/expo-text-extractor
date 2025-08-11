@@ -23,5 +23,16 @@ export type {
   RecognizeTextAndroidResult,
 } from './android';
 
+// Re-export unified cross-platform types
+export type {
+  UnifiedPoint,
+  UnifiedBoundingBox,
+  UnifiedRecognitionLevel,
+  UnifiedTextExtractionOptions,
+  UnifiedTextCandidate,
+  UnifiedTextRegion,
+  UnifiedTextExtractionResult,
+} from './unified';
+
 // Re-export common types
 export type { ExpoTextExtractorModule } from './common';
