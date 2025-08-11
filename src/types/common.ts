@@ -2,6 +2,9 @@
  * Common types shared across platforms for expo-text-extractor
  */
 
+import type { ExtractTextAndroidOptions, RecognizeTextAndroidResult } from './android';
+import type { VNRecognizeTextRequestOptions, RecognizeTextIOSResult } from './ios';
+
 /**
  * Platform-agnostic interface for the expo-text-extractor module.
  * This defines the core functionality available across all platforms.
@@ -31,8 +34,8 @@ export interface ExpoTextExtractorModule {
    */
   extractTextFromImageIOS?: (
     uri: string,
-    options?: import('./ios').VNRecognizeTextRequestOptions,
-  ) => Promise<import('./ios').RecognizeTextIOSResult>;
+    options?: VNRecognizeTextRequestOptions,
+  ) => Promise<RecognizeTextIOSResult>;
 
   /**
    * Android-only advanced API that provides detailed ML Kit results.
@@ -43,6 +46,6 @@ export interface ExpoTextExtractorModule {
    */
   extractTextFromImageAndroid?: (
     uri: string,
-    options?: import('./android').ExtractTextAndroidOptions,
-  ) => Promise<import('./android').RecognizeTextAndroidResult>;
+    options?: ExtractTextAndroidOptions,
+  ) => Promise<RecognizeTextAndroidResult>;
 }

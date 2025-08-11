@@ -11,8 +11,8 @@ import {
   unifiedToVisionBoundingBox,
   visionToUnifiedBoundingBox,
 } from './coordinates';
-import type { RecognizeTextAndroidResult } from '../types/android';
-import type { RecognizeTextIOSResult } from '../types/ios';
+import type { RecognizeTextAndroidResult, ExtractTextAndroidOptions } from '../types/android';
+import type { RecognizeTextIOSResult, VNRecognizeTextRequestOptions } from '../types/ios';
 import type {
   UnifiedTextExtractionOptions,
   UnifiedTextExtractionResult,
@@ -168,8 +168,8 @@ export function androidResultToUnified(
 export function unifiedToIosOptions(
   unifiedOptions: UnifiedTextExtractionOptions,
   imageSize: { width: number; height: number },
-): import('../types/ios').VNRecognizeTextRequestOptions {
-  const iosOptions: import('../types/ios').VNRecognizeTextRequestOptions = {};
+): VNRecognizeTextRequestOptions {
+  const iosOptions: VNRecognizeTextRequestOptions = {};
 
   if (unifiedOptions.recognitionLevel) {
     iosOptions.recognitionLevel = unifiedOptions.recognitionLevel;
@@ -208,8 +208,8 @@ export function unifiedToIosOptions(
 /**
  * Convert unified options to Android ML Kit options
  */
-export function getAndroidOptions(): import('../types/android').ExtractTextAndroidOptions {
-  const androidOptions: import('../types/android').ExtractTextAndroidOptions = {};
+export function getAndroidOptions(): ExtractTextAndroidOptions {
+  const androidOptions: ExtractTextAndroidOptions = {};
 
   // ML Kit currently only supports Latin script in this module
   androidOptions.model = 'latin';

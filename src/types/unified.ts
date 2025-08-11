@@ -3,6 +3,9 @@
  * These types provide a consistent API across iOS and Android platforms
  */
 
+import type { RecognizeTextAndroidResult } from './android';
+import type { RecognizeTextIOSResult } from './ios';
+
 /**
  * A point in 2D space with both pixel and percentage coordinates.
  * Always uses top-left origin (0,0 at top-left corner) for consistency.
@@ -217,8 +220,8 @@ export interface UnifiedTextExtractionResult {
    */
   platformResult?: {
     /** Raw iOS Vision Framework result */
-    ios?: import('./ios').RecognizeTextIOSResult;
+    ios?: RecognizeTextIOSResult;
     /** Raw Android ML Kit result */
-    android?: import('./android').RecognizeTextAndroidResult;
+    android?: RecognizeTextAndroidResult;
   };
 }
