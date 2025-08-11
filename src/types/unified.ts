@@ -55,7 +55,7 @@ export interface UnifiedTextExtractionOptions {
    * Recognition level preference.
    * - 'fast': Prioritizes speed over accuracy
    * - 'accurate': Prioritizes accuracy over speed
-   * 
+   *
    * @default 'accurate'
    */
   recognitionLevel?: UnifiedRecognitionLevel;
@@ -129,25 +129,25 @@ export interface UnifiedTextCandidate {
 export interface UnifiedTextRegion {
   /** Primary recognized text (highest confidence candidate) */
   text: string;
-  
+
   /** All recognition candidates for this region, sorted by confidence (highest first) */
   candidates: UnifiedTextCandidate[];
-  
+
   /** Bounding box of the text region in pixel coordinates */
   boundingBox: UnifiedBoundingBox;
-  
+
   /** Corner points of the text region (useful for rotated text) */
   cornerPoints?: UnifiedPoint[];
-  
+
   /** Overall confidence score for this region (0 to 1) */
   confidence: number;
-  
+
   /** Detected language of the text (ISO 639-1 code, e.g., 'en', 'es') */
   recognizedLanguage?: string;
-  
+
   /** Rotation angle of the text in degrees (0 = horizontal) */
   rotationDegree?: number;
-  
+
   /**
    * Platform-specific metadata that doesn't fit the unified model.
    * This allows access to platform-specific features while maintaining compatibility.
@@ -180,19 +180,19 @@ export interface UnifiedTextRegion {
 export interface UnifiedTextExtractionResult {
   /** All detected text regions in the image */
   regions: UnifiedTextRegion[];
-  
+
   /** Concatenated text from all regions */
   fullText: string;
-  
+
   /** Original image dimensions in pixels */
   imageSize: {
     width: number;
     height: number;
   };
-  
+
   /** Platform that performed the text recognition */
   platform: 'ios' | 'android';
-  
+
   /** Echo of the effective configuration used for recognition */
   effectiveOptions: {
     recognitionLevel: UnifiedRecognitionLevel;
@@ -202,7 +202,7 @@ export interface UnifiedTextExtractionResult {
     customWords?: string[];
     maxCandidates: number;
   };
-  
+
   /** Processing performance metrics */
   performance?: {
     /** Time taken for text recognition in milliseconds */
@@ -210,7 +210,7 @@ export interface UnifiedTextExtractionResult {
     /** Number of text regions detected */
     regionsDetected: number;
   };
-  
+
   /**
    * Raw platform-specific result for advanced use cases.
    * This allows access to platform-specific features not covered by the unified API.

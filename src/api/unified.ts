@@ -65,7 +65,7 @@ export async function extractTextFromImageAdvanced(
 
     // Now convert with actual image dimensions
     const finalIosOptions = unifiedToIosOptions(effectiveOptions, iosResult.imageSize);
-    
+
     // If options changed due to image dimensions, make another call
     // Otherwise use the existing result
     const finalResult = await ExpoTextExtractorModule.extractTextFromImageIOS(
