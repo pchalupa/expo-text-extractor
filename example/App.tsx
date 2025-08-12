@@ -34,6 +34,44 @@ interface BoundingBoxOverlayProps {
   visible: boolean;
 }
 
+/**
+ * Calculate the actual rendered image dimensions when using resizeMode="contain"
+ * The image is scaled to fit within the container while maintaining aspect ratio
+ */
+function calculateActualImageDimensions(
+  originalImageSize: { width: number; height: number },
+  containerSize: { width: number; height: number },
+): { width: number; height: number; offsetX: number; offsetY: number } {
+  const containerAspectRatio = containerSize.width / containerSize.height;
+  const imageAspectRatio = originalImageSize.width / originalImageSize.height;
+
+  let actualWidth: number;
+  let actualHeight: number;
+  let offsetX: number;
+  let offsetY: number;
+
+  if (imageAspectRatio > containerAspectRatio) {
+    // Image is wider - fit to container width
+    actualWidth = containerSize.width;
+    actualHeight = containerSize.width / imageAspectRatio;
+    offsetX = 0;
+    offsetY = (containerSize.height - actualHeight) / 2;
+  } else {
+    // Image is taller - fit to container height
+    actualWidth = containerSize.height * imageAspectRatio;
+    actualHeight = containerSize.height;
+    offsetX = (containerSize.width - actualWidth) / 2;
+    offsetY = 0;
+  }
+
+  return {
+    width: actualWidth,
+    height: actualHeight,
+    offsetX,
+    offsetY,
+  };
+}
+
 function BoundingBoxOverlay({ result, imageLayout, visible }: BoundingBoxOverlayProps) {
   if (!visible || !result || !imageLayout) {
     return null;
@@ -45,11 +83,18 @@ function BoundingBoxOverlay({ result, imageLayout, visible }: BoundingBoxOverlay
     return '#f87171'; // red for low confidence
   };
 
+  // Calculate the actual rendered image dimensions within the container
+  const actualImageDimensions = calculateActualImageDimensions(result.imageSize, imageLayout);
+
   return (
     <View style={styles.overlayContainer}>
       {result.regions.map((region, index) => {
-        // Project the bounding box coordinates to the overlay dimensions
-        const projectedBox = projectToOverlay(region.boundingBox, result.imageSize, imageLayout);
+        // Project the bounding box coordinates to the actual rendered image dimensions
+        const projectedBox = projectToOverlay(
+          region.boundingBox,
+          result.imageSize,
+          actualImageDimensions,
+        );
 
         // Ensure we have a bounding box (not a point)
         if (!('width' in projectedBox)) {
@@ -64,8 +109,8 @@ function BoundingBoxOverlay({ result, imageLayout, visible }: BoundingBoxOverlay
             style={[
               styles.boundingBox,
               {
-                left: projectedBox.x,
-                top: projectedBox.y,
+                left: projectedBox.x + actualImageDimensions.offsetX,
+                top: projectedBox.y + actualImageDimensions.offsetY,
                 width: projectedBox.width,
                 height: projectedBox.height,
                 borderColor: boxColor,
@@ -194,7 +239,11 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.wrapper}>
-        <View style={styles.imageContainer}>
+        <View
+          style={[
+            styles.imageContainer,
+            imageUri ? styles.imageContainerExpanded : styles.imageContainerCollapsed,
+          ]}>
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.button, isLoading && styles.disabledButton]}
@@ -234,13 +283,15 @@ export default function App() {
             )}
           </View>
         </View>
-        <View style={styles.devRow}>
-          <Text style={styles.meta}>Show advanced details</Text>
-          <Switch value={showAdvanced} onValueChange={setShowAdvanced} />
-        </View>
-        <View style={styles.devRow}>
-          <Text style={styles.meta}>Show bounding boxes</Text>
-          <Switch value={showBoundingBoxes} onValueChange={setShowBoundingBoxes} />
+        <View style={styles.controlsContainer}>
+          <View style={styles.devRow}>
+            <Text style={styles.meta}>Show advanced details</Text>
+            <Switch value={showAdvanced} onValueChange={setShowAdvanced} />
+          </View>
+          <View style={styles.devRow}>
+            <Text style={styles.meta}>Show bounding boxes</Text>
+            <Switch value={showBoundingBoxes} onValueChange={setShowBoundingBoxes} />
+          </View>
         </View>
         <ScrollView style={styles.resultsContainer} contentContainerStyle={styles.scrollContainer}>
           {isLoading ? (
@@ -360,15 +411,26 @@ const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
     flexDirection: 'column',
-    rowGap: 20,
     paddingHorizontal: 20,
     paddingVertical: 20,
   },
   imageContainer: {
-    flex: 1,
     borderRadius: 10,
     overflow: 'hidden',
     backgroundColor: '#fff',
+    marginBottom: 16,
+  },
+  imageContainerCollapsed: {
+    height: 200,
+  },
+  imageContainerExpanded: {
+    height: '50%',
+    minHeight: 300,
+    maxHeight: 500,
+  },
+  controlsContainer: {
+    marginBottom: 16,
+    gap: 8,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -406,6 +468,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     borderRadius: 10,
+    maxHeight: '40%',
   },
   scrollContainer: {
     padding: 20,
@@ -452,11 +515,13 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   devRow: {
-    marginTop: 8,
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    borderRadius: 8,
   },
   infoSection: {
     marginTop: 16,
@@ -539,23 +604,28 @@ const styles = StyleSheet.create({
   },
   legendSection: {
     marginVertical: 8,
-    padding: 8,
+    padding: 12,
     backgroundColor: '#f8f9fa',
-    borderRadius: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
   legendRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 2,
+    marginVertical: 3,
   },
   legendBox: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
-    marginRight: 8,
+    width: 16,
+    height: 16,
+    borderRadius: 3,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
   },
   legendText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 13,
+    color: '#495057',
+    fontWeight: '500',
   },
 });

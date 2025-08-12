@@ -26,13 +26,17 @@ export function visionToUnifiedBoundingBox(
   imageSize: ImageDimensions,
 ): UnifiedBoundingBox {
   // Vision uses normalized coordinates [0..1] with bottom-left origin
+  // visionBox.y represents the bottom edge of the text bounding box
+  
   // Convert to pixel coordinates with top-left origin
   const pixelX = visionBox.x * imageSize.width;
   const pixelWidth = visionBox.width * imageSize.width;
   const pixelHeight = visionBox.height * imageSize.height;
 
   // Convert from bottom-left to top-left origin
-  const pixelY = imageSize.height - visionBox.y * imageSize.height - pixelHeight;
+  // visionBox.y is the distance from bottom of image to bottom of text box
+  // We want the distance from top of image to top of text box
+  const pixelY = imageSize.height - (visionBox.y + visionBox.height) * imageSize.height;
 
   return {
     x: Math.round(pixelX),
@@ -41,7 +45,7 @@ export function visionToUnifiedBoundingBox(
     height: Math.round(pixelHeight),
     // Percentage coordinates (top-left origin)
     xPercent: visionBox.x,
-    yPercent: 1 - visionBox.y - visionBox.height, // Convert from bottom-left to top-left
+    yPercent: 1 - (visionBox.y + visionBox.height), // Convert from bottom-left to top-left
     widthPercent: visionBox.width,
     heightPercent: visionBox.height,
   };
@@ -63,6 +67,8 @@ export function unifiedToVisionBoundingBox(
   const normalizedHeight = unifiedBox.heightPercent;
 
   // Convert from top-left to bottom-left origin
+  // unifiedBox.yPercent is distance from top to top of text box
+  // Vision expects distance from bottom to bottom of text box
   const normalizedY = 1 - unifiedBox.yPercent - unifiedBox.heightPercent;
 
   return {
@@ -143,6 +149,7 @@ export function visionToUnifiedPoints(
   return visionPoints.map((point) => {
     const pixelX = point.x * imageSize.width;
     // Convert from bottom-left to top-left origin
+    // point.y is distance from bottom, we want distance from top
     const pixelY = imageSize.height - point.y * imageSize.height;
 
     return {
