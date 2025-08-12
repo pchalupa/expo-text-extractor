@@ -138,7 +138,6 @@ export default function App() {
   const [cameraPermission, setCameraPermission] = useState<PermissionStatus | null>(null);
   const [galleryPermission, setGalleryPermission] = useState<PermissionStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [showBoundingBoxes, setShowBoundingBoxes] = useState(true);
   const [imageLayout, setImageLayout] = useState<{ width: number; height: number } | null>(null);
 
@@ -238,26 +237,27 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.wrapper}>
+      <ScrollView style={styles.mainScrollView} contentContainerStyle={styles.mainScrollContainer}>
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[styles.button, isLoading && styles.disabledButton]}
+            onPress={handleImagePick}
+            disabled={isLoading}>
+            <Text style={styles.buttonText}>Pick Image</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, isLoading && styles.disabledButton]}
+            onPress={handleCameraCapture}
+            disabled={isLoading}>
+            <Text style={styles.buttonText}>Take Photo</Text>
+          </TouchableOpacity>
+        </View>
+
         <View
           style={[
             styles.imageContainer,
             imageUri ? styles.imageContainerExpanded : styles.imageContainerCollapsed,
           ]}>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, isLoading && styles.disabledButton]}
-              onPress={handleImagePick}
-              disabled={isLoading}>
-              <Text style={styles.buttonText}>Pick Image</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, isLoading && styles.disabledButton]}
-              onPress={handleCameraCapture}
-              disabled={isLoading}>
-              <Text style={styles.buttonText}>Take Photo</Text>
-            </TouchableOpacity>
-          </View>
           <View style={styles.previewContainer}>
             {imageUri ? (
               <View style={styles.imageWrapper}>
@@ -285,120 +285,115 @@ export default function App() {
         </View>
         <View style={styles.controlsContainer}>
           <View style={styles.devRow}>
-            <Text style={styles.meta}>Show advanced details</Text>
-            <Switch value={showAdvanced} onValueChange={setShowAdvanced} />
-          </View>
-          <View style={styles.devRow}>
             <Text style={styles.meta}>Show bounding boxes</Text>
             <Switch value={showBoundingBoxes} onValueChange={setShowBoundingBoxes} />
           </View>
         </View>
-        <ScrollView style={styles.resultsContainer} contentContainerStyle={styles.scrollContainer}>
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#6858e9" />
-              <Text style={styles.loadingText}>Extracting text...</Text>
-            </View>
-          ) : (
-            <View>
-              <Text style={styles.sectionTitle}>Extracted Text</Text>
-              {result && result.regions.length > 0 ? (
-                result.regions.map((region, index) => (
-                  <Text key={`region-${index}`} style={styles.mono}>
-                    {region.text}
-                  </Text>
-                ))
-              ) : (
-                <Text style={styles.noResultsText}>No text detected</Text>
-              )}
 
-              {result && (
-                <View style={styles.infoSection}>
-                  <Text style={styles.sectionTitle}>Detection Info</Text>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#6858e9" />
+            <Text style={styles.loadingText}>Extracting text...</Text>
+          </View>
+        ) : (
+          <View style={styles.resultsContainer}>
+            <Text style={styles.sectionTitle}>Extracted Text</Text>
+            {result && result.regions.length > 0 ? (
+              result.regions.map((region, index) => (
+                <Text key={`region-${index}`} style={styles.mono}>
+                  {region.text}
+                </Text>
+              ))
+            ) : (
+              <Text style={styles.noResultsText}>No text detected</Text>
+            )}
+
+            {result && (
+              <View style={styles.infoSection}>
+                <Text style={styles.sectionTitle}>Detection Info</Text>
+                <Text style={styles.meta}>
+                  Platform: {result.platform} | Regions: {result.regions.length}
+                </Text>
+                <Text style={styles.meta}>
+                  Image Size: {result.imageSize.width}×{result.imageSize.height}
+                </Text>
+                <Text style={styles.meta}>
+                  Recognition Level: {result.effectiveOptions.recognitionLevel}
+                </Text>
+                {result.performance && (
                   <Text style={styles.meta}>
-                    Platform: {result.platform} | Regions: {result.regions.length}
+                    Processing Time: {result.performance.recognitionTimeMs}ms
                   </Text>
-                  <Text style={styles.meta}>
-                    Image Size: {result.imageSize.width}×{result.imageSize.height}
-                  </Text>
-                  <Text style={styles.meta}>
-                    Recognition Level: {result.effectiveOptions.recognitionLevel}
-                  </Text>
-                  {result.performance && (
+                )}
+              </View>
+            )}
+
+            {result && (
+              <View style={styles.infoSection}>
+                <Text style={styles.sectionTitle}>Advanced Details</Text>
+
+                {showBoundingBoxes && (
+                  <View style={styles.legendSection}>
+                    <Text style={styles.subsectionTitle}>Bounding Box Legend</Text>
+                    <View style={styles.legendRow}>
+                      <View style={[styles.legendBox, { backgroundColor: '#4ade80' }]} />
+                      <Text style={styles.legendText}>High confidence (≥80%)</Text>
+                    </View>
+                    <View style={styles.legendRow}>
+                      <View style={[styles.legendBox, { backgroundColor: '#fbbf24' }]} />
+                      <Text style={styles.legendText}>Medium confidence (60-79%)</Text>
+                    </View>
+                    <View style={styles.legendRow}>
+                      <View style={[styles.legendBox, { backgroundColor: '#f87171' }]} />
+                      <Text style={styles.legendText}>Low confidence (&lt;60%)</Text>
+                    </View>
+                  </View>
+                )}
+
+                <Text style={styles.subsectionTitle}>Platform Capabilities</Text>
+                <Text style={styles.meta}>
+                  Supported Features:{' '}
+                  {Object.entries(platformCapabilities.features)
+                    .filter(([_, supported]) => supported)
+                    .map(([feature]) => feature)
+                    .join(', ')}
+                </Text>
+
+                <Text style={[styles.subsectionTitle, { flex: 1 }]}>Detected Regions</Text>
+                {result.regions.map((region, index) => (
+                  <View key={`detail-${index}`} style={styles.regionDetail}>
+                    <Text style={styles.regionTitle}>Region #{index + 1}</Text>
+                    <Text style={styles.mono}>"{region.text}"</Text>
+                    <Text style={styles.meta}>Confidence: {region.confidence.toFixed(3)}</Text>
                     <Text style={styles.meta}>
-                      Processing Time: {result.performance.recognitionTimeMs}ms
+                      Position: ({region.boundingBox.x.toFixed(0)},{' '}
+                      {region.boundingBox.y.toFixed(0)})
                     </Text>
-                  )}
-                </View>
-              )}
-
-              {showAdvanced && result && (
-                <View style={styles.infoSection}>
-                  <Text style={styles.sectionTitle}>Advanced Details</Text>
-                  
-                  {showBoundingBoxes && (
-                    <View style={styles.legendSection}>
-                      <Text style={styles.subsectionTitle}>Bounding Box Legend</Text>
-                      <View style={styles.legendRow}>
-                        <View style={[styles.legendBox, { backgroundColor: '#4ade80' }]} />
-                        <Text style={styles.legendText}>High confidence (≥80%)</Text>
+                    <Text style={styles.meta}>
+                      Size: {region.boundingBox.width.toFixed(0)}×
+                      {region.boundingBox.height.toFixed(0)}
+                    </Text>
+                    <Text style={styles.meta}>
+                      Percentage: ({region.boundingBox.xPercent.toFixed(2)},{' '}
+                      {region.boundingBox.yPercent.toFixed(2)})
+                    </Text>
+                    {region.candidates.length > 1 && (
+                      <View style={styles.candidatesSection}>
+                        <Text style={styles.meta}>Alternative candidates:</Text>
+                        {region.candidates.slice(1).map((candidate, cIdx) => (
+                          <Text key={`cand-${index}-${cIdx}`} style={styles.candidate}>
+                            • {candidate.text} (conf: {candidate.confidence.toFixed(3)})
+                          </Text>
+                        ))}
                       </View>
-                      <View style={styles.legendRow}>
-                        <View style={[styles.legendBox, { backgroundColor: '#fbbf24' }]} />
-                        <Text style={styles.legendText}>Medium confidence (60-79%)</Text>
-                      </View>
-                      <View style={styles.legendRow}>
-                        <View style={[styles.legendBox, { backgroundColor: '#f87171' }]} />
-                        <Text style={styles.legendText}>Low confidence (&lt;60%)</Text>
-                      </View>
-                    </View>
-                  )}
-                  
-                  <Text style={styles.subsectionTitle}>Platform Capabilities</Text>
-                  <Text style={styles.meta}>
-                    Supported Features:{' '}
-                    {Object.entries(platformCapabilities.features)
-                      .filter(([_, supported]) => supported)
-                      .map(([feature]) => feature)
-                      .join(', ')}
-                  </Text>
-
-                  <Text style={styles.subsectionTitle}>Detected Regions</Text>
-                  {result.regions.map((region, index) => (
-                    <View key={`detail-${index}`} style={styles.regionDetail}>
-                      <Text style={styles.regionTitle}>Region #{index + 1}</Text>
-                      <Text style={styles.mono}>"{region.text}"</Text>
-                      <Text style={styles.meta}>Confidence: {region.confidence.toFixed(3)}</Text>
-                      <Text style={styles.meta}>
-                        Position: ({region.boundingBox.x.toFixed(0)},{' '}
-                        {region.boundingBox.y.toFixed(0)})
-                      </Text>
-                      <Text style={styles.meta}>
-                        Size: {region.boundingBox.width.toFixed(0)}×
-                        {region.boundingBox.height.toFixed(0)}
-                      </Text>
-                      <Text style={styles.meta}>
-                        Percentage: ({region.boundingBox.xPercent.toFixed(2)},{' '}
-                        {region.boundingBox.yPercent.toFixed(2)})
-                      </Text>
-                      {region.candidates.length > 1 && (
-                        <View style={styles.candidatesSection}>
-                          <Text style={styles.meta}>Alternative candidates:</Text>
-                          {region.candidates.slice(1).map((candidate, cIdx) => (
-                            <Text key={`cand-${index}-${cIdx}`} style={styles.candidate}>
-                              • {candidate.text} (conf: {candidate.confidence.toFixed(3)})
-                            </Text>
-                          ))}
-                        </View>
-                      )}
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          )}
-        </ScrollView>
-      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -407,6 +402,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#eee',
+  },
+  mainScrollView: {
+    flex: 1,
+  },
+  mainScrollContainer: {
+    flexGrow: 1,
+    padding: 8,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
   },
   wrapper: {
     flex: 1,
@@ -466,9 +473,10 @@ const styles = StyleSheet.create({
   },
   resultsContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
     borderRadius: 10,
     maxHeight: '40%',
+    padding: 20,
   },
   scrollContainer: {
     padding: 20,
@@ -525,9 +533,13 @@ const styles = StyleSheet.create({
   },
   infoSection: {
     marginTop: 16,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#ddd',
+    paddingTop: 12,    
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
   subsectionTitle: {
     fontSize: 14,
