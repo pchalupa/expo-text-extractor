@@ -296,17 +296,19 @@ export default function App() {
             <Text style={styles.loadingText}>Extracting text...</Text>
           </View>
         ) : (
-          <View style={styles.resultsContainer}>
-            <Text style={styles.sectionTitle}>Extracted Text</Text>
-            {result && result.regions.length > 0 ? (
-              result.regions.map((region, index) => (
-                <Text key={`region-${index}`} style={styles.mono}>
-                  {region.text}
-                </Text>
-              ))
-            ) : (
-              <Text style={styles.noResultsText}>No text detected</Text>
-            )}
+          <>
+            <View style={styles.resultsContainer}>
+              <Text style={styles.sectionTitle}>Extracted Text</Text>
+              {result && result.regions.length > 0 ? (
+                result.regions.map((region, index) => (
+                  <Text key={`region-${index}`} style={styles.mono}>
+                    {region.text}
+                  </Text>
+                ))
+              ) : (
+                <Text style={styles.noResultsText}>No text detected</Text>
+              )}
+            </View>
 
             {result && (
               <View style={styles.infoSection}>
@@ -391,7 +393,7 @@ export default function App() {
                 ))}
               </View>
             )}
-          </View>
+          </>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -533,8 +535,9 @@ const styles = StyleSheet.create({
   },
   infoSection: {
     marginTop: 16,
-    paddingTop: 12,    
-    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingLeft: 12,
+    paddingRight: 12,
     paddingBottom: 12,
     backgroundColor: '#ffffff',
     borderRadius: 8,
