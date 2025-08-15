@@ -10,6 +10,7 @@ import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import java.io.File
+import java.lang.reflect.Method
 
 class ExpoTextExtractorModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -74,7 +75,8 @@ class ExpoTextExtractorModule : Module() {
             promise.reject(
               CodedException(
                 "E_UNSUPPORTED_MODEL",
-                "Requested model '$requestedModel' is not bundled. Add appropriate ML Kit text-recognition dependency or use 'latin'."
+                "Requested model '$requestedModel' is not bundled. Add appropriate ML Kit text-recognition dependency or use 'latin'.",
+                null
               )
             )
             return@AsyncFunction
@@ -202,5 +204,46 @@ class ExpoTextExtractorModule : Module() {
         promise.reject(CodedException("UNKNOWN_ERROR", error.message ?: "Unknown error", error))
       }
     }
+  }
+
+  // Reflection helper functions to safely call methods that may not exist in all ML Kit versions
+  private fun reflectGetString(obj: Any, methodName: String): String? {
+    return try {
+      val method: Method = obj.javaClass.getMethod(methodName)
+      method.invoke(obj) as? String
+    } catch (e: Exception) {
+      null
+    }
+  }
+
+  private fun reflectGetNumber(obj: Any, methodName: String): Number? {
+    return try {
+      val method: Method = obj.javaClass.getMethod(methodName)
+      method.invoke(obj) as? Number
+    } catch (e: Exception) {
+      null
+    }
+  }
+
+  private fun reflectGet(obj: Any, methodName: String): Any? {
+    return try {
+      val method: Method = obj.javaClass.getMethod(methodName)
+      method.invoke(obj)
+    } catch (e: Exception) {
+      null
+    }
+  }
+
+  private fun reflectFirstNumber(obj: Any, methodNames: List<String>): Number? {
+    for (methodName in methodNames) {
+      try {
+        val method: Method = obj.javaClass.getMethod(methodName)
+        val result = method.invoke(obj) as? Number
+        if (result != null) return result
+      } catch (e: Exception) {
+        // Continue to next method name
+      }
+    }
+    return null
   }
 }
