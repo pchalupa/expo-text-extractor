@@ -25,7 +25,14 @@ class ExpoTextExtractorModule : Module() {
         val uri = when {
           uriString.startsWith("file://") -> uriString.toUri()
           uriString.startsWith("content://") -> uriString.toUri()
-          else -> Uri.fromFile(File(uriString))
+          uriString.startsWith("/") -> {
+            val file = File(uriString)
+            if (!file.exists())
+              throw CodedException("File does not exist: $uriString")
+
+            Uri.fromFile(file)
+          }
+          else -> throw CodedException("The provided URI is not valid: $uriString")
         }
 
         val inputImage = InputImage.fromFilePath(context, uri)
@@ -38,8 +45,10 @@ class ExpoTextExtractorModule : Module() {
             promise.resolve(recognizedTexts)
           }
           .addOnFailureListener { error ->
-            promise.reject(CodedException("err", error))
+            promise.reject(CodedException("Failed to extract text from image", error))
           }
+      } catch (error: CodedException) {
+          promise.reject(error)
       } catch (error: Exception) {
         promise.reject(CodedException("UNKNOWN_ERROR", error.message ?: "Unknown error", error))
       }
