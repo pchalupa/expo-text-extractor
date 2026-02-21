@@ -17,7 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 export default function App() {
   const [result, setResult] = useState<string[]>([]);
@@ -108,45 +108,49 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.wrapper}>
-        <View style={styles.imageContainer}>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[styles.button, isLoading && styles.disabledButton]}
-              onPress={handleImagePick}
-              disabled={isLoading}>
-              <Text style={styles.buttonText}>Pick Image</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, isLoading && styles.disabledButton]}
-              onPress={handleCameraCapture}
-              disabled={isLoading}>
-              <Text style={styles.buttonText}>Take Photo</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.previewContainer}>
-            {imageUri ? (
-              <Image source={{ uri: imageUri }} style={styles.previewImage} />
-            ) : (
-              <Text style={styles.placeholderText}>No image selected</Text>
-            )}
-          </View>
-        </View>
-        <ScrollView style={styles.resultsContainer} contentContainerStyle={styles.scrollContainer}>
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#6858e9" />
-              <Text style={styles.loadingText}>Extracting text...</Text>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.wrapper}>
+          <View style={styles.imageContainer}>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, isLoading && styles.disabledButton]}
+                onPress={handleImagePick}
+                disabled={isLoading}>
+                <Text style={styles.buttonText}>Pick Image</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, isLoading && styles.disabledButton]}
+                onPress={handleCameraCapture}
+                disabled={isLoading}>
+                <Text style={styles.buttonText}>Take Photo</Text>
+              </TouchableOpacity>
             </View>
-          ) : result.length > 0 ? (
-            result.map((line, index) => <Text key={index}>{line}</Text>)
-          ) : (
-            <Text style={styles.noResultsText}>No text detected</Text>
-          )}
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+            <View style={styles.previewContainer}>
+              {imageUri ? (
+                <Image source={{ uri: imageUri }} style={styles.previewImage} />
+              ) : (
+                <Text style={styles.placeholderText}>No image selected</Text>
+              )}
+            </View>
+          </View>
+          <ScrollView
+            style={styles.resultsContainer}
+            contentContainerStyle={styles.scrollContainer}>
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#6858e9" />
+                <Text style={styles.loadingText}>Extracting text...</Text>
+              </View>
+            ) : result.length > 0 ? (
+              result.map((line, index) => <Text key={index}>{line}</Text>)
+            ) : (
+              <Text style={styles.noResultsText}>No text detected</Text>
+            )}
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
