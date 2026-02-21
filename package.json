@@ -30,16 +30,16 @@
   "devDependencies": {
     "@auto-it/conventional-commits": "^11.3.0",
     "@auto-it/npm": "^11.3.0",
-    "@types/react": "~18.3.12",
+    "@types/react": "~19.1.0",
     "auto": "^11.3.0",
-    "expo": "~52.0.0",
-    "expo-module-scripts": "^3.1.0",
-    "expo-modules-core": "^1.5.12",
+    "expo": "^54.0.33",
+    "expo-module-scripts": "^5.0.8",
     "prettier": "^3.4.2",
-    "react-native": "0.76.0"
+    "react-native": "0.81.5"
   },
   "peerDependencies": {
-    "expo": ">=52.0.0",
-    "expo-modules-core": ">=1.5.0"
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
   }
 }
