@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
     :ios => '15.1',
     :tvos => '15.1'
   }
-  s.swift_version  = '5.4'
+  s.swift_version  = '5.9'
   s.source         = { git: 'https://github.com/pchalupa/expo-text-extractor' }
   s.static_framework = true
 
