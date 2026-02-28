@@ -1,3 +1,20 @@
+# 2.0.0 (Sat Feb 28 2026)
+
+#### 💥 Breaking Change
+
+- chore!: upgrade expo sdk [#35](https://github.com/pchalupa/expo-text-extractor/pull/35) ([@pchalupa](https://github.com/pchalupa))
+
+#### 🔩 Dependency Updates
+
+- chore(deps): bump minimatch in /example [#37](https://github.com/pchalupa/expo-text-extractor/pull/37) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+
+#### Authors: 2
+
+- [@dependabot[bot]](https://github.com/dependabot[bot])
+- Petr Chalupa ([@pchalupa](https://github.com/pchalupa))
+
+---
+
 # 1.0.0 (Sat Feb 21 2026)
 
 #### 💥 Breaking Change
