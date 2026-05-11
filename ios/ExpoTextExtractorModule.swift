@@ -2,6 +2,10 @@ import ExpoModulesCore
 import Vision
 
 public class ExpoTextExtractorModule: Module {
+    enum ExtractorError: Error {
+        case invalidImage
+    }
+
     public func definition() -> ModuleDefinition {
         Name("ExpoTextExtractor")
 
@@ -14,7 +18,7 @@ public class ExpoTextExtractorModule: Module {
                 let imageData = try Data(contentsOf: url)
                 let image = UIImage(data: imageData)
                 guard let cgImage = image?.cgImage else {
-                    throw Exception.init(name: "err", description: "err")
+                    throw ExtractorError.invalidImage
                 }
 
                 let requestHandler = VNImageRequestHandler(cgImage: cgImage)
