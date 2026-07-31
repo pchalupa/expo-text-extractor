@@ -34,7 +34,7 @@
     "auto": "^11.3.0",
     "eslint": "^9.39.3",
     "eslint-config-expo": "^10.0.0",
-    "expo": "^54.0.33",
+    "expo": "^57.0.9",
     "expo-module-scripts": "^5.0.8",
     "prettier": "^3.8.1",
     "react-native": "0.81.5",
